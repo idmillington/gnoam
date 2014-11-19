@@ -1,12 +1,45 @@
 Gnoam
 =====
 
-This document is a suggestion for a mini-language designed for
-technical end-users to specify natural language generation
-content. The repository may end up being added to with
-implementations, depending on whether the project progresses, but
-until this message is updated, you should assume anything else in this
-repo is merely experimentation.
+This document is a suggestion for a mini-language designed to specify
+natural language generation content.
+
+This repository may end up being added to with implementations,
+depending on whether the project progresses, but until this message is
+updated, you should assume anything else in this repo is merely
+experimentation.
+
+Simple Example
+---
+
+This example shows the basic generation method, but doesn't show any
+of the data-driven features of the language.
+
+    [root] -> [name] and [name] fell in love. [problem]
+    [name] -> Abdul
+    [name] -> Bethan
+    [name] -> Carlos
+    [name] -> Dai
+    [problem; frequency 3] -> They lived [location-problem].
+    [problem; frequency 2] -> Their parents [parent-problem].
+    [problem] -> They started out hating each other.
+    [location-problem] -> in distant cities
+    [location-problem] -> on opposite sides of the country
+    [location-problem] -> on different continents
+    [parent-problem] -> disapproved of the match
+    [parent-problem] -> were old enemies
+
+This generates content such as:
+
+> Abdul and Carlos fell in love. Their parents disapproved of the match.
+
+or
+
+> Bethan and Dai fell in love. They lived on different continents.
+
+The advantage of Gnoam is that these choices can be data-driven and
+can be stored for future use. So the fact that Bethan and Dai are on
+different continents can affect the text generation later.
 
 Feature Demonstration Example
 ---
@@ -106,15 +139,15 @@ These clauses can appear in the tag for a rule definition:
   be given (effectively this means that semi-colons between hashtags
   are optional).
 
-- `freq <positive-number>` The relative frequency that this rule will
-  be chosen when it matches. At most one of these clauses should be
-  present.
+- `freq <positive-number>` or `frequency <positive-number>` The
+  relative frequency that this rule will be chosen when it matches. At
+  most one of these clauses should be present.
 
 - `priority <number>` When more than one rule is valid for a
   replacement, the priority values are considered. Only the highest
   priorities will be used. By default rules have priority 1. So adding
   a priority 0 rule with no `if` or other matching criteria is a good
-  way to make a fallback rule that generates replacement if not better
+  way to make a fall-back rule that generates replacement if not better
   alternative exists.
 
 - `if <boolean-expression>` A condition which must be fulfilled for
@@ -135,7 +168,7 @@ All these clauses can be repeated.
 
 - `<hashtag expression>` An expression containing hashtags and boolean
   operators (`and`, `not`, `or` and parentheses). This limits the
-  rules that will be used to fulfil this tag to those that match the
+  rules that will be used to fulfill this tag to those that match the
   expression. There is an implied `and` between adjacent hashtags, so
   `#foo #bar or #sun` is equivalent to `#foo and #bar or #sun`.
 
