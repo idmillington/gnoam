@@ -1,4 +1,4 @@
-Gnoam
+<img alt="The Gnoam Gnome" src="http://idm.me.uk/media/img/gnoam.png" height="80"> Gnoam
 =====
 
 This document is a suggestion for a mini-language designed to specify
@@ -41,13 +41,15 @@ The advantage of Gnoam is that these choices can be data-driven and
 can be stored for future use. So the fact that Bethan and Dai are on
 different continents can affect the text generation later.
 
-Feature Demonstration Example
+Language Features
 ---
 
-This sample is not intended to be useful in any way, but just to pack
-in as many features as possible.
+### Feature-overload sample
 
-    using gnoam.names as names
+This sample is not intended to be useful in any way, except to show as
+many features as possible, so you can refer back to see the syntax.
+
+    using gnoam/names as names
     using titles
 
     [root] -> [names.full-name] [action]
@@ -56,75 +58,99 @@ in as many features as possible.
 
     # This is a comment line.
 
-    the * [action] /regex/ ->
+    /regex/ the * [action] ->
         gave [person] [=kisses] kiss[= kisses; filter plural("", "es")].
 
     [root #tag1 #tag2; freq 2; if bob = 2; set bob += 1] ->
         [person #tag3; where char = bob; as char.name; filter drunk]
 
-The first two lines import other sets of rules. The rest of the
+The first two lines import other files of rules. The rest of the
 document defines more rules.
 
-Items written as `[root]` are called *tags*. Rules have one tag,
-possibly surrounded by other content (including wildcards and regular
-expressions), followed by the `->` operator, then some content to
-replace the tag by.
+### Rules
 
-The replacement content can include further tags, which will in turn
-be replaced, until no more tags remain and the final text is
-generated.
+Gnoam programs consist of sets of rules. Rules determine how a *tag*
+is replaced by other content. To start with, we have only one tag,
+`[root]` (the root node is just a convention, it is possible to begin
+generation with any single tag). Rules may replace a tag with content
+including other tags, which then need to be replaced in turn, until no
+more tags remain.
+
+Rules always match one tag, though they can also feature other content
+before the tag (including wildcards and regular expressions), which
+have to be present for the rule to be eligable to run. The `->`
+operator follows the tag, and then the rest of the rule consists of
+the content to use in the replacement.
 
 Whitespace is trimmed from around replacement content and internal
-whitespace is compressed into spaces (i.e. `/\s+/ /g`). Explicit
-whitespace can be given with backslash escapes: `\n` and `\t`.
+whitespace is compressed into spaces (i.e. `/\s+/ /g`). This is
+similar to the way HTML works. Explicit whitespace can be given with
+backslash escapes: `\s` (a regular space), `\n` and `\t`.
 
 If a tag cannot be replaced, it will be left in the final text and a
-warning will be generated.
+warning will be generated. If multiple rules match a tag, one will be
+selected at random.
 
-If multiple rules match a tag, one will be selected at random.
+Gnoam files are unicode compatible and should be utf-8 encoded.
 
-Tag Names
----
+### Tag Names
 
-Tags do not contain whitespace. They conventionally use a hyphenated
-lower-case style.
+Tag names do not contain whitespace and must begin with a letter
+(unicode character categories beginning with `L` except `[Lm]`). They
+conventionally use a hyphenated lower-case ASCII style, but this
+preference is purely mine and isn't enforced.
 
 A file defines a set of tags in its rules. Those rules can be accessed
 from other files with the `using` directive at the start of the file.
 
-- `using <path>` on its own brings a files' rules in to the current
+- `using <path>` on its own imports a file's rules in to the current
   namespace as if they were defined here.
 
-- `using <path> as <name>` brings rules in, under a common prefix,
+- `using <path> as <name>` imports rules under a common prefix,
   separated from the rest of the name by a period. So to refer to the
-  `[name]` rule in the `foobar` file, we'd use the tag
-  `[foobar.name]`.
+  `[name]` rule importee with `using foobar as foobar`, we'd use the
+  tag `[foobar.name]`.
 
-The periods are not reserved syntax, so it is totally possible to
+The periods are not reserved syntax, so it is possible to
 define another rule with the tag `[foobar.name]` in the current file.
 
+When the generation is run, a `GNOAM_RULE_PATH` variable is used to
+find rule files. Directories in that variable are considered in
+order. An imported name of the form `using foo/bar as name` looks in a
+subdirectory `foo` for the rule file `bar.gnoam`.
 
-Special Tags
----
+
+### Special Tags
+
 
 There are two special tags:
 
 - `[]` And empty tag, always is replaced by nothing, but is used if
   you want to preserve whitespace at the start or end of
   content. (e.g. `[foo] -> [] [bar] []` will have a space around
-  whatever bar is replaced by).
+  whatever bar is replaced by). Empty tags can also be used purely to
+  hold clauses, in which case they begin with a semicolon.
 
 - `[= <expression>]` Inserts the value of an expression, normally
   using data from the data object (see below).
 
-Clauses
----
+
+### Clauses
 
 Tags can have a number of additional *clauses* in them, which change
-or augment their behavior. A tag can have a single clause following
-the tag name, and further clauses are semi-colon separated.
+or augment their behavior. Clauses are semi-colon separated. There is
+an optional semi-colon between the tag name and the first clause. For
+empty tags, and insertion tags, this first semi-colon is required.
 
-### Clauses in rule definitions
+For example:
+
+    [tag-name frequency 4; priority 2]
+    [tag-name; frequency 4; priority 2]
+    [; set variable = 3]
+    [= variable; filter uppercase]
+
+
+#### Clauses in rule definitions
 
 These clauses can appear in the tag for a rule definition:
 
@@ -143,26 +169,22 @@ These clauses can appear in the tag for a rule definition:
   relative frequency that this rule will be chosen when it matches. At
   most one of these clauses should be present.
 
-- `priority <number>` When more than one rule is valid for a
-  replacement, the priority values are considered. Only the highest
-  priorities will be used. By default rules have priority 1. So adding
-  a priority 0 rule with no `if` or other matching criteria is a good
-  way to make a fall-back rule that generates replacement if not better
-  alternative exists.
+- `pri <number>` or `priority <number>` When more than one rule is
+  valid for a replacement, the priority values are considered. Only
+  the highest priorities will be used. By default rules have
+  priority 1. So adding a priority 0 rule with no `if` or other
+  matching criteria is a good way to make a fall-back rule that
+  generates replacement if not better alternative exists.
 
 - `if <boolean-expression>` A condition which must be fulfilled for
   the rule to be chosen. Any number of these clauses can be present
   and all must pass before the rule is chosen.
 
-- `set <data-path> <operator>? <expression>` Sets some data value
+- `set <data-path> <operator>? <expression>?` Sets some data value
   before performing the replacement, if this rule is selected. See
   below for details. Any number of such clauses can be present.
 
-- `set-after <data-path> <operator>? <expression>` Sets some data value
-  before after the replacement, if this rule is selected. See
-  below for details. Any number of such clauses can be present.
-
-### Clauses in tags in rule bodies
+#### Clauses in tags in rule bodies
 
 All these clauses can be repeated.
 
@@ -178,13 +200,10 @@ All these clauses can be repeated.
   one of which is chosen. For that, use a tag with multiple possible
   rules.
 
-- `set <data-path> <operator>? <expression>` Sets some data value
+- `set <data-path> <operator>? <expression>?` Sets some data value
   before replacing the tag. See below for details.
 
-- `set-after <data-path> <operator>? <expression>` Sets some data value
-  before replacing the tag. See below for details.
-
-- `where <data-path> <operator>? <expression>` Sets some data value
+- `where <data-path> <operator>? <expression>?` Sets some data value
   while replacing the tag, but reverts its value afterwards.
 
 - `as <data-path>` Takes the final replacement text and assigns it to
@@ -195,39 +214,79 @@ All these clauses can be repeated.
   depend on the filter, and if a filter has no parameters, then the
   parentheses after the filter name are optional.
 
-The `set-after`, `as` and `filter` clauses are
-order-dependent. Filters can be applied before or after the
-replacement content is saved. All `where` clauses are reverted after
-these clauses are processed, in the reverse order that they were set.
+The `as` and `filter` clauses are order-dependent. Filters can be
+applied before or after the replacement content is saved. All `where`
+clauses are reverted after these clauses are processed, in the reverse
+order that they were set.
 
 The order of `set` and `where` clauses are honored.
 
-Data
----
+Further refinement of the order of setting values can be achieved by
+moving set clauses out into empty tags. So to set the value after a
+tag is processed, you can do this:
 
-Gnoam is data driven. Generation begins with the `[root]` node (by
-convention, any can be specified) and a namespace of data. That data
-can be queried and modified during text generation.
+    [tag-to-replace][;set foo = 2]
+
+### Data
+
+Gnoam is data driven. Generation begins with a root node and a
+namespace of data. That data can be queried and modified during text
+generation.
 
 Data can consist of numbers (floating point), strings of text, or
-objects. Objects are Lua-like: they represent both name to value
-mappings and lists of data. An object is created by either assigning
-to a field within it, using the `new` keyword, or using curly braces
-as an object literal. E.g. if `foo` doesn't exist yet:
+objects. Objects are Lua-like: they represent both name-to-value
+mappings and lists of data.
 
-    set foo.bar = 4
+Numeric values can be given as literals. Literal strings of text can be
+enclosed within single or double quotation marks.
 
-creates `foo` as an object and sets its `bar` property. As does
+    set name = "Bob"
+
+Strings can have escape sequences for whitespace and quotation marks.
+
+And object literal can be given using curly braces with items
+separated by commans and key-to-value pairs separated by a colon:
 
     set foo = {bar: 4}
 
-Where
+The empty object can be given with `{}` or the `new` keyword:
 
     set foo = new
+    set foo = {}
 
-creates `foo` as an empty object.
+And object is also created by assigning to a field within it. So if
+`foo` doesn't exist yet:
 
-### Operators
+    set foo.bar = 4
+
+creates `foo` as an object and sets its `bar` property. It is equivalent of
+
+    set foo = {bar: 4}
+
+
+#### Boolean values and flags
+
+Numbers are used to represent boolean values. Where zero is false and
+anything else is true. To ease the common case where variables just
+represent whether something has been done or seen (often called 'flag'
+variables), `set` and `where` can be given just a variable name, and
+they set the value to 1. For example
+
+    [tag set variable]
+    [tag set variable 1]
+    [tag set variable = 1]
+
+are equivalent.
+
+Similarly in `if` expressions, a variable used in a boolean expression
+will be `true` if the variable is not defined, if it is the number
+zero, if it is the empty string, or if it is the empty object. So we
+can test for the variable above in a rule with
+
+    [another-tag if variable] -> ...
+
+
+#### Operators
 
 When setting data, the `=` operator is optional, so the above could be
 
@@ -276,7 +335,7 @@ makes sure `foo` is a number between 0 and 10 inclusive.
 Conclusion
 ---
 
-The aim of Gnoam is to be a relatively simple syntax for simple cases
+The aim of Gnoam is to be relatively simple for simple cases
 
     [root] -> We have a [large-description] range of products.
 
@@ -292,7 +351,7 @@ flexible for data-oriented applications
     [change-description if 0 < change <= 5] -> modest gains
     [change-description priority 0] -> challenging circumstances
 
-and ready for more complex tasks
+and scalable to more complex tasks
 
     [root] ->
         This is the story of how I fell in love with
