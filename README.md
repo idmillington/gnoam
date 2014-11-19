@@ -110,21 +110,49 @@ These clauses can appear in the tag for a rule definition:
   be chosen when it matches. At most one of these clauses should be
   present.
 
+- `priority <number>` When more than one rule is valid for a
+  replacement, the priority values are considered. Only the highest
+  priorities will be used. By default rules have priority 1. So adding
+  a priority 0 rule with no `if` or other matching criteria is a good
+  way to make a fallback rule that generates replacement if not better
+  alternative exists.
+
 - `if <boolean-expression>` A condition which must be fulfilled for
-  the rule to be chosen.
+  the rule to be chosen. Any number of these clauses can be present
+  and all must pass before the rule is chosen.
 
 - `set <data-path> <operator>? <expression>` Sets some data value
   before performing the replacement, if this rule is selected. See
-  below for details.
+  below for details. Any number of such clauses can be present.
+
+- `set-after <data-path> <operator>? <expression>` Sets some data value
+  before after the replacement, if this rule is selected. See
+  below for details. Any number of such clauses can be present.
 
 ### Clauses in tags in rule bodies
+
+All these clauses can be repeated.
+
+- `<hashtag expression>` An expression containing hashtags and boolean
+  operators (`and`, `not`, `or` and parentheses). This limits the
+  rules that will be used to fulfil this tag to those that match the
+  expression. There is an implied `and` between adjacent hashtags, so
+  `#foo #bar or #sun` is equivalent to `#foo and #bar or #sun`.
+
+- `if <boolean-expression>` A condition which must be fulfilled for
+  this tag to be replaced. If this fails, the tag will be
+  removed. This is not designed to have `else` logic: a set of tags
+  one of which is chosen. For that, use a tag with multiple possible
+  rules.
 
 - `set <data-path> <operator>? <expression>` Sets some data value
   before replacing the tag. See below for details.
 
+- `set-after <data-path> <operator>? <expression>` Sets some data value
+  before replacing the tag. See below for details.
+
 - `where <data-path> <operator>? <expression>` Sets some data value
-  while replacing the tag, but reverts its value afterwards. See below
-  for details.
+  while replacing the tag, but reverts its value afterwards.
 
 - `as <data-path>` Takes the final replacement text and assigns it to
   some data value.
@@ -133,6 +161,13 @@ These clauses can appear in the tag for a rule definition:
   it through the given filter. This can change the output. Parameters
   depend on the filter, and if a filter has no parameters, then the
   parentheses after the filter name are optional.
+
+The `set-after`, `as` and `filter` clauses are
+order-dependent. Filters can be applied before or after the
+replacement content is saved. All `where` clauses are reverted after
+these clauses are processed, in the reverse order that they were set.
+
+The order of `set` and `where` clauses are honored.
 
 Data
 ---
@@ -193,6 +228,18 @@ Other operators are available:
   their list data. The data value may be missing or otherwise must be
   an object. The expression must be an object.
 
+- `?=` sets the value only if it is not already set.
+
+- `>=` makes sure a numeric value is no less than the expression.
+
+- `<=` makes sure a numeric value is no more than the expression.
+
+The latter two imply that limiting in a range can be done in two clauses:
+
+    set foo >= 0; set foo <= 10
+
+makes sure `foo` is a number between 0 and 10 inclusive.
+
 Conclusion
 ---
 
@@ -210,7 +257,7 @@ flexible for data-oriented applications
 
     [change-description if 5 < change] -> dramatic gains
     [change-description if 0 < change <= 5] -> modest gains
-    [change-description if change <= 0] -> challenging circumstances
+    [change-description priority 0] -> challenging circumstances
 
 and ready for more complex tasks
 
