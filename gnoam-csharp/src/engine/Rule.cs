@@ -55,7 +55,7 @@ namespace gnoam.engine
    */
   public class Rule : RuleBase {
     public Content Output;
-    private readonly TagReplacementWatchers watchers;
+    private TagReplacementWatchers watchers;
 
     // ........................................................................
 
@@ -66,10 +66,17 @@ namespace gnoam.engine
 
     }
 
-    public Rule(Tag tag, Content output, int priority, double frequency, TagReplacementWatchers watchers)
+    public Rule(Tag tag, Content output, int priority, double frequency, IEnumerable<ITagReplacementWatcher> watchers)
       : base(tag, priority, frequency) {
       Output = output;
-      this.watchers = watchers;
+      if (watchers != null) {
+        this.watchers = new TagReplacementWatchers(watchers);
+      }
+    }
+
+    public void AddWatcher(ITagReplacementWatcher watcher) {
+      if (watchers == null) watchers = new TagReplacementWatchers();
+      watchers.Add(watcher);
     }
 
     // RuleBase

@@ -8,7 +8,7 @@ namespace gnoam.engine
   // --------------------------------------------------------------------------
 
   public abstract class TagBase : ContentItem, ITagReplacementWatcher {
-    private readonly TagReplacementWatchers watchers;
+    private TagReplacementWatchers watchers;
 
     public override bool IsTag { get { return true; } }
 
@@ -19,6 +19,11 @@ namespace gnoam.engine
       if (watchers != null) {
         this.watchers = new TagReplacementWatchers(watchers);
       }
+    }
+
+    public void AddWatcher(ITagReplacementWatcher watcher) {
+      if (watchers == null) watchers = new TagReplacementWatchers();
+      watchers.Add(watcher);
     }
 
     // IReplacementWatcher

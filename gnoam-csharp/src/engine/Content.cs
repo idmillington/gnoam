@@ -32,5 +32,8 @@ namespace gnoam.engine
       }
       return builder.ToString();
     }
+    public void Add(string text) {
+      Add(new TextContent(text));
+    }
   }
 }

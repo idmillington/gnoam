@@ -9,44 +9,72 @@ namespace gnoam
     public static void Main(string[] args)
     {
       TagReplacementWatchers watchers;
+      DataLookupTag dlt;
+      Rule rule;
+      RuleSet rules = new RuleSet();
 
-      Rule rule1 = new Rule("root");
-      rule1.Output = new Content();
-      rule1.Output.Add(new TextContent("Hello."));
+      rule = new Rule("root");
+      rule.Output = new Content();
+      rule.Output.Add("Hello. ");
+      rule.Output.Add(new Tag("cats"));
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
 
-      Rule rule2 = new Rule("root");
-      rule2.Frequency = 2;
-      rule2.Output = new Content();
-      rule2.Output.Add(new TextContent("Hi "));
+      rule = new Rule("cats");
+      rule.Output = new Content();
+      dlt = new DataLookupTag("value");
+      dlt.AddWatcher(new CardinalFilter());
+      rule.Output.Add(dlt);
+      rule.Output.Add(" (");
+      rule.Output.Add(new DataLookupTag("value"));
+      rule.Output.Add(") cat");
+      dlt = new DataLookupTag("value");
+      dlt.AddWatcher(new PluraliseFilter());
+      rule.Output.Add(dlt);
+      rule.Output.Add(" in a bag, here is the ");
+      dlt = new DataLookupTag("value");
+      dlt.AddWatcher(new OrdinalFilter());
+      rule.Output.Add(dlt);
+      rule.Output.Add(" (");
+      dlt = new DataLookupTag("value");
+      dlt.AddWatcher(new OrdinalSuffixFilter());
+      rule.Output.Add(dlt);
+      rule.Output.Add(")");
+      rule.AddWatcher(new SentenceFilter());
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
+
+      rule = new Rule("root");
+      rule.Frequency = 2;
+      rule.Output = new Content();
+      rule.Output.Add("Hi ");
       watchers = new TagReplacementWatchers();
       watchers.Add(new AsClause("name"));
-      rule2.Output.Add(new Tag("nickname", watchers));
-      rule2.Output.Add(new TextContent("! Do you mind if I call you '"));
-      rule2.Output.Add(new DataLookupTag("name"));
-      rule2.Output.Add(new TextContent("'?"));
+      rule.Output.Add(new Tag("nickname", watchers));
+      rule.Output.Add("! Do you mind if I call you '");
+      rule.Output.Add(new DataLookupTag("name"));
+      rule.Output.Add("'?");
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
 
-      Rule rule3 = new Rule("nickname");
-      rule3.Output = new Content();
-      rule3.Output.Add(new TextContent("mate"));
+      rule = new Rule("nickname");
+      rule.Output = new Content();
+      rule.Output.Add("mate");
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
 
-      Rule rule4 = new Rule("nickname");
-      rule4.Output = new Content();
-      rule4.Output.Add(new TextContent("buddy"));
-
-      RuleSet rules = new RuleSet();
-      rules.Add(rule1);
-      rules.Add(rule2);
-      rules.Add(rule3);
-      rules.Add(rule4);
+      rule = new Rule("nickname");
+      rule.Output = new Content();
+      rule.Output.Add("buddy");
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
 
       Engine engine = new Engine(rules);
       Namespace data = new Namespace();
+      data.Set("value", 3);
       string result = engine.Run("root", data);
 
-      Console.WriteLine(rule1.ToString());
-      Console.WriteLine(rule2.ToString());
-      Console.WriteLine(rule3.ToString());
-      Console.WriteLine(rule4.ToString());
+
       Console.WriteLine("........................................................................");
       Console.WriteLine(result);
       Console.WriteLine("........................................................................");
