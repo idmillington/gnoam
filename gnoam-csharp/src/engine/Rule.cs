@@ -1,0 +1,137 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace gnoam.engine
+{
+  /**
+   * Base class for how rules need to operate to work in the engine.
+   */
+  public abstract class RuleBase : IComparable<RuleBase>, ITagReplacementWatcher {
+    public RuleBase(string tagName, int priority, double frequency) : this(new Tag(tagName), priority, frequency) {
+    }
+
+    public RuleBase(Tag tag, int priority, double frequency) {
+      Tag = tag;
+      Priority = priority;
+      Frequency = frequency;
+    }
+
+    // Core data
+    // ........................................................................
+
+    public Tag Tag { get; set; }
+
+    public int Priority { get; set; }
+
+    public double Frequency { get; set; }
+
+    // Firing support
+    // ........................................................................
+
+    public abstract bool CanFire(Tag tag, Namespace data);
+
+    public abstract Content Fire(Tag tag, Namespace data);
+
+    // IReplacementWatcher
+    // ........................................................................
+
+    public abstract void TagWillBeReplaced(TagBase tag, Namespace data);
+
+    public abstract string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data);
+
+    // IComparable
+    // ........................................................................
+
+    public int CompareTo(RuleBase other) {
+      if (other == null) return 1;
+      int priorityCompare = other.Priority.CompareTo(Priority);
+      if (priorityCompare != 0) return priorityCompare;
+      else return GetHashCode().CompareTo(other.GetHashCode());
+    }
+  }
+
+  /**
+   * A basic rule with a fixed output and a set of delegate replacement watchers.
+   */
+  public class Rule : RuleBase {
+    public Content Output;
+    private readonly TagReplacementWatchers watchers;
+
+    // ........................................................................
+
+    public Rule(string tagName) : this(new Tag(tagName), null, 1, 1, null) {
+    }
+
+    public Rule(Tag tag) : this(tag, null, 1, 1, null) {
+
+    }
+
+    public Rule(Tag tag, Content output, int priority, double frequency, TagReplacementWatchers watchers)
+      : base(tag, priority, frequency) {
+      Output = output;
+      this.watchers = watchers;
+    }
+
+    // RuleBase
+    // ........................................................................
+
+    /** Checks if any other constrains on the rule allow it to fire.
+     * 
+     * This is called after the tag is checked for matching, so that can be ignored.
+     */
+    public override bool CanFire(Tag tag, Namespace data) {
+      return true;
+    }
+
+    public override Content Fire(Tag tag, Namespace data) {
+      return Output;
+    }
+
+    // IReplacementWatcher
+    // ........................................................................
+
+    public override void TagWillBeReplaced(TagBase tag, Namespace data) {
+      if (watchers != null) watchers.TagWillBeReplaced(tag, data);
+    }
+
+    public override string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data) {
+      if (watchers != null) return watchers.TagHasBeenReplaced(replacement, tag, data);
+      else return replacement;
+    }
+
+    // Other API
+    // ........................................................................
+
+    public override string ToString() {
+      return string.Format("{0} -> {1}", Tag.ToString(), Output.ToString());
+    }
+  }
+
+  /**
+   * A repository for rules that can be queried by tag.
+   */
+  public class RuleSet {
+    protected Dictionary<Tag, SortedSet<RuleBase>> rules;
+
+    public RuleSet() {
+      rules = new Dictionary<Tag, SortedSet<RuleBase>>();
+    }
+
+    public void Add(RuleBase rule) {
+      Tag tag = rule.Tag;
+      if (!rules.ContainsKey(tag)) {
+        rules[tag] = new SortedSet<RuleBase>();
+      }
+      rules[tag].Add(rule);
+    }
+
+    public SortedSet<RuleBase> GetRules(Tag tag) {
+      if (rules.ContainsKey(tag)) {
+        return rules[tag];
+      } else {
+        return null;
+      }
+    }
+  }
+}
+
