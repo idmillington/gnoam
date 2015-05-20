@@ -94,11 +94,18 @@ namespace gnoam.engine
         int lastMatchingPriority = int.MinValue;
         foreach (RuleBase rule in rulesForTag) {
           if (rule.Priority < lastMatchingPriority) break;
+
+          // If the tag has no hashtags, it doesn't care, if it does, at least one must be present.
+          if (tagToMatch.HashTags.Count > 0 && !tagToMatch.HashTags.Overlaps(rule.HashTags)) continue;
+
+          // The rule can have arbitrary additional requirements (like if-clauses).
           if (!rule.CanFire(tagToMatch, data)) continue;
 
           result.Add(rule);
           result.totalFrequency += rule.Frequency;
-          lastMatchingPriority = rule.Priority;
+
+          // Only increase the matched priority.
+          if (rule.MinPriority > lastMatchingPriority) lastMatchingPriority = rule.MinPriority;
         }
       }
       return result;

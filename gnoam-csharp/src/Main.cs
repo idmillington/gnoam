@@ -1,22 +1,45 @@
 ﻿using System.Collections.Generic;
 using gnoam.engine;
+using gnoam.file;
 using System;
 
 namespace gnoam
 {
   class MainClass
   {
-    public static void Main(string[] args)
-    {
+    public static void Main(string[] args) {
+      TestEngine();
+      //TestParse();
+    }
+
+    public static void TestParse() {
+      string content = 
+        "[root] -> Hello.\n" +
+        "[root] -> Hi [nickname as name]!\n" +
+        "  Do you mind if I call you '[=name]'?\n" +
+        "# Add more nicknames if required.\n"+
+        "[nickname] -> mate\n" +
+        "[nickname] -> buddy\n";
+
+      var lines = LineSplitter.getLines(content, "internal");
+      Console.WriteLine(lines.Count);
+      foreach (var line in lines) {
+        Console.WriteLine(line.ToString());
+      }
+    }
+
+    public static void TestEngine() {
       TagReplacementWatchers watchers;
       DataLookupTag dlt;
       Rule rule;
       RuleSet rules = new RuleSet();
 
       rule = new Rule("root");
+      rule.Priority = 2; rule.MinPriority = 2;
       rule.Output = new Content();
       rule.Output.Add("Hello. ");
       rule.Output.Add(new Tag("cats"));
+      rule.Expression = Expression.Parse("value? 3 >=");
       rules.Add(rule);
       Console.WriteLine(rule.ToString());
 
@@ -69,9 +92,27 @@ namespace gnoam
       rules.Add(rule);
       Console.WriteLine(rule.ToString());
 
+      rule = new Rule("nickname");
+      rule.Output = new Content();
+      rule.Output.Add("dude");
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
+
+      rule = new Rule("nickname");
+      rule.Output = new Content();
+      rule.Output.Add("man");
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
+
+      rule = new Rule("nickname");
+      rule.Output = new Content();
+      rule.Output.Add("friendo");
+      rules.Add(rule);
+      Console.WriteLine(rule.ToString());
+
       Engine engine = new Engine(rules);
       Namespace data = new Namespace();
-      data.Set("value", 3);
+      data.Set("value", 2);
       string result = engine.Run("root", data);
 
 

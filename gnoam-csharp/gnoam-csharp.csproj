@@ -43,6 +43,8 @@
     <Compile Include="src\engine\Rule.cs" />
     <Compile Include="src\engine\Tag.cs" />
     <Compile Include="src\engine\TagReplacementWatchers.cs" />
+    <Compile Include="src\engine\Expression.cs" />
+    <Compile Include="src\file\TagSplitter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

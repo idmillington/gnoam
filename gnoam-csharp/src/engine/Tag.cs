@@ -89,8 +89,10 @@ namespace gnoam.engine
    * Tag is the name for recursive tags, those that are matched by rules.
    */
   public sealed class Tag : TagBase, ITagReplacementWatcher {
-    public readonly string tagName;
-    public readonly string context;
+    public readonly string TagName;
+    public readonly string Context;
+
+    public HashSet<string> HashTags { get; private set; }
 
     public override bool IsTag { get { return true; } }
 
@@ -103,8 +105,9 @@ namespace gnoam.engine
     }
 
     public Tag(string tagName, string context, IEnumerable<ITagReplacementWatcher> watchers) : base(watchers) {
-      this.context = context;
-      this.tagName = tagName;
+      this.Context = context;
+      this.TagName = tagName;
+      this.HashTags = new HashSet<string>();
     }
 
     // Equality Testing
@@ -115,14 +118,14 @@ namespace gnoam.engine
     }
 
     public override int GetHashCode() {
-      if (context == null) return tagName.GetHashCode();
-      else return tagName.GetHashCode() ^ context.GetHashCode();
+      if (Context == null) return TagName.GetHashCode();
+      else return TagName.GetHashCode() ^ Context.GetHashCode();
     }
 
     public static bool operator ==(Tag a, Tag b) {
       if (System.Object.ReferenceEquals(a, b)) return true;
       if (((object)a == null) || ((object)b == null)) return false;
-      return a.tagName == b.tagName && a.context == b.context;
+      return a.TagName == b.TagName && a.Context == b.Context;
     }
 
     public static bool operator !=(Tag a, Tag b) {
@@ -133,10 +136,10 @@ namespace gnoam.engine
     // ........................................................................
 
     public override string ToString() {
-      if (context != null) {
-        return string.Format("[{0}.{1}]", context, tagName);
+      if (Context != null) {
+        return string.Format("[{0}.{1}]", Context, TagName);
       } else {
-        return string.Format("[{0}]", tagName);
+        return string.Format("[{0}]", TagName);
       }
     }
   }

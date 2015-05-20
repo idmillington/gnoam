@@ -12,7 +12,7 @@ namespace gnoam.engine
 
     public RuleBase(Tag tag, int priority, double frequency) {
       Tag = tag;
-      Priority = priority;
+      Priority = MinPriority = priority;
       Frequency = frequency;
     }
 
@@ -21,7 +21,27 @@ namespace gnoam.engine
 
     public Tag Tag { get; set; }
 
+    public HashSet<string> HashTags { get; protected set; }
+
     public int Priority { get; set; }
+
+    /**
+     * MinPriority allows a rule to be valid in a range of priorities.
+     * 
+     * A Priority of 1 and MinPriority of 0, for example, would allow the
+     * rule to be chosen if other rules of Priority 1 were valid, but
+     * if it were the only one chosen (or if it were chosen along with others
+     * that also had a MinPriority of 0), then it would fall through and
+     * also allow priority 0 rules to be chosen.
+     */
+    private int _minPriority;
+    public int MinPriority { 
+      get { return _minPriority; }
+      set { 
+        if (value > Priority) value = Priority;
+        _minPriority = value;
+      }
+    }
 
     public double Frequency { get; set; }
 
@@ -55,6 +75,8 @@ namespace gnoam.engine
    */
   public class Rule : RuleBase {
     public Content Output;
+    public Expression Expression;
+
     private TagReplacementWatchers watchers;
 
     // ........................................................................
@@ -82,12 +104,18 @@ namespace gnoam.engine
     // RuleBase
     // ........................................................................
 
-    /** Checks if any other constrains on the rule allow it to fire.
+    /** 
+     * Checks if any other constrains on the rule allow it to fire.
      * 
-     * This is called after the tag is checked for matching, so that can be ignored.
+     * This is called after the tag is checked for matching, and after hashtags
+     * are considered, so they can be ignored.
      */
     public override bool CanFire(Tag tag, Namespace data) {
-      return true;
+      if (Expression != null) {
+        return Expression.Evaluate(data).ToBool();
+      } else {
+        return true;
+      }
     }
 
     public override Content Fire(Tag tag, Namespace data) {

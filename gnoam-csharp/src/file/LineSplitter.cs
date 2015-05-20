@@ -4,9 +4,65 @@ using System.Collections.Generic;
 
 namespace gnoam.file
 {
-  public struct LogicalLine {
-    public string line;
+  public class LogicalLineChunk {
+    public string content;
     public int lineNumberInOriginalFile;
+    public int startingColumnInOriginalFile;
+
+    public LogicalLineChunk(string content, int lineNumberInOriginalFile) 
+      : this(content, lineNumberInOriginalFile, 0) {
+    }
+
+    public LogicalLineChunk(string content, int lineNumberInOriginalFile, int startingColumnInOriginalFile) {
+      this.content = content;
+      this.lineNumberInOriginalFile = lineNumberInOriginalFile;
+      this.startingColumnInOriginalFile = startingColumnInOriginalFile;
+    }
+  }
+
+  public class LogicalLine {
+    public List<LogicalLineChunk> chunks;
+    public int startingLineNumberInOriginalFile;
+    public int Length {
+      get;
+      private set;
+    }
+
+    public LogicalLine() {
+      Length = 0;
+      chunks = new List<LogicalLineChunk>();
+    }
+
+    public bool IsEmpty {
+      get { return chunks.Count == 0; }
+    }
+
+    /** Adds a line from the original file. */
+    public void AddNewLine(string lineFromOriginalFile, int lineNumberInOriginalFile) {
+      string trimmed = lineFromOriginalFile.Trim();
+      if (trimmed.Length == 0) return;
+
+      // If this is our first line, store where we started.
+      if (IsEmpty) startingLineNumberInOriginalFile = lineNumberInOriginalFile;
+
+      // Find out how much whitespace we have to strip.
+      int i = 0;
+      while (char.IsWhiteSpace(lineFromOriginalFile[i])) ++i;
+
+      Length += trimmed.Length;
+      chunks.Add(new LogicalLineChunk(trimmed, i));
+    }
+
+    public override string ToString() {
+      StringBuilder builder = new StringBuilder();
+      builder.Append(startingLineNumberInOriginalFile);
+      builder.Append(": ");
+      foreach (var chunk in chunks) {
+        builder.Append(chunk.content);
+        builder.Append(" ");
+      }
+      return builder.ToString();
+    }
   }
 
   /** Takes the text input and splits it into logical lines.
@@ -18,61 +74,46 @@ namespace gnoam.file
    */
   public static class LineSplitter
   {
-    private static void _addLogicalLineFromBuffer(List<LogicalLine> result, List<string> buffer, int fileLine) {
-      if (buffer.Count == 0) return;
-
-      // Join the string
-      StringBuilder builder = new StringBuilder();
-      foreach (string line in buffer) {
-        builder.Append(buffer);
-        builder.Append(" ");
-      }
-      string lineContent = builder.ToString();
-
-      // Replace whitespace (TODO - replace internal whitespace using regex)
-      lineContent = lineContent.Trim();
-
-      // Create and store the result.
-      LogicalLine logicalLine = new LogicalLine();
-      logicalLine.line = lineContent;
-      logicalLine.lineNumberInOriginalFile = fileLine;
-      result.Add(logicalLine);
-    }
-
-    public static List<LogicalLine> getLines(string fileContent, string fileName=null) {
+    public static List<LogicalLine> getLines(string fileContent, string fileName="<unknown file>") {
       var result = new List<LogicalLine>();
 
       var fileLines = fileContent.Split(new char[] {'\n','\r'});
 
-      bool lastLineWasBlank = false;
       int fileLineNumber = 1;
-      int currentLogicalLineStartedOnFileLine = 1;
-      List<string> currentLogicalLineBuffer = new List<String>();
+      bool canHaveFollowOnLine = false;
+
+      LogicalLine logicalLine = new LogicalLine();
+
       foreach (string fileLine in fileLines) {
-        if (fileLine.Trim().Length == 0) {
-          lastLineWasBlank = true;
+        string trimmedFileLine = fileLine.Trim();
+        if (trimmedFileLine.Length == 0) {
+          canHaveFollowOnLine = false;
+        } else if (trimmedFileLine[0] == '#') {
+          // Ignore comments.
         } else if (char.IsWhiteSpace(fileLine[0])) {
-          if (lastLineWasBlank) {
-            string msg = "Can't have a follow-on line after a blank line.";
+          // We have a follow-on line, make sure we follow on from something.
+          if (!canHaveFollowOnLine) {
+            string msg = "Can't have a follow-on line at the start, or after a blank line.";
             throw new gnoam.file.SyntaxError(msg, fileName, fileLineNumber);
           }
-          // Add the follow on line to the buffer, unless it is a comment.
-          string trimmedFileLine = fileLine.TrimStart();
-          if (trimmedFileLine[0] != '#') currentLogicalLineBuffer.Add(trimmedFileLine);
-          lastLineWasBlank = false;
+
+          // Add the follow on line to the buffer.
+          logicalLine.AddNewLine(fileLine, fileLineNumber);
         } else {
           // We have a new line, so clear the buffer.
-          _addLogicalLineFromBuffer(result, currentLogicalLineBuffer, currentLogicalLineStartedOnFileLine);
+          if (!logicalLine.IsEmpty) {
+            result.Add(logicalLine);
+            logicalLine = new LogicalLine();
+          }
 
-          // Start anew.
-          currentLogicalLineStartedOnFileLine = fileLineNumber;
-          currentLogicalLineBuffer.Clear();
-          lastLineWasBlank = false;
+          // Add this first part of the line to the buffer.
+          logicalLine.AddNewLine(fileLine, fileLineNumber);
+          canHaveFollowOnLine = true;
         }
         ++fileLineNumber;
       }
-      // Clear any remaining lines from the buffer.
-      _addLogicalLineFromBuffer(result, currentLogicalLineBuffer, currentLogicalLineStartedOnFileLine);
+      // Add any remaining content.
+      if (!logicalLine.IsEmpty) result.Add(logicalLine);
 
       return result;
     }

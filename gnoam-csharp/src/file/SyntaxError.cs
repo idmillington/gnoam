@@ -20,6 +20,10 @@ namespace gnoam.file
       this.fileName = fileName;
       this.sourceLine = sourceLine;
     }
+
+    public override string ToString() {
+      return string.Format("[SyntaxError] {0}, line {1}: {2}", fileName, sourceLine, base.ToString());
+    }
   }
 }
 

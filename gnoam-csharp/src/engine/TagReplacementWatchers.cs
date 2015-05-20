@@ -61,6 +61,18 @@ namespace gnoam.engine
   // --------------------------------------------------------------------------
 
   /**
+   * Gobbles any replacement text, use with an as-clause to generate and store content.
+   */
+  public class HideClause : ITagReplacementWatcher {
+    public virtual void TagWillBeReplaced(TagBase tag, Namespace data) {
+    }
+
+    public virtual string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data) {
+      return string.Empty;
+    }
+  }
+
+  /**
    * Stores the replaced text in the namespace under the given data name.
    */
   public class AsClause : ITagReplacementWatcher {
@@ -70,11 +82,59 @@ namespace gnoam.engine
       this.dataName = dataName;
     }
 
-    public void TagWillBeReplaced(TagBase tag, Namespace data) {
+    public virtual void TagWillBeReplaced(TagBase tag, Namespace data) {
     }
 
-    public string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data) {
+    public virtual string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data) {
       data.Set(dataName, replacement);
+      return replacement;
+    }
+  }
+
+  /**
+   * Stores a value in the namespace under the given data name.
+   */
+  public class SetClause : ITagReplacementWatcher {
+    protected string dataName;
+    protected Expression expression;
+
+    public SetClause(string dataName) : this(dataName, null) {
+    }
+
+    public SetClause(string dataName, Expression expression) {
+      this.dataName = dataName;
+      this.expression = expression;
+    }
+
+    public virtual void TagWillBeReplaced(TagBase tag, Namespace data) {
+      Datum valueToSet = (expression != null) ? expression.Evaluate(data) : new NumericDatum(1);
+      data.Set(dataName, valueToSet);
+    }
+
+    public virtual string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data) {
+      return replacement;
+    }
+  }
+
+  /**
+   * Where clause is a variation of the set clause, where the value is reverted after the replacement.
+   */
+  public class WhereClause : SetClause {
+    protected Datum oldValue;
+
+    public WhereClause(string dataName) : base(dataName) {
+    }
+    public WhereClause(string dataName, Expression expression) : base(dataName, expression) {
+    }
+
+    public override void TagWillBeReplaced(TagBase tag, Namespace data) {
+      oldValue = data.Get(dataName);
+      base.TagWillBeReplaced(tag, data);
+    }
+
+    public override string TagHasBeenReplaced(string replacement, TagBase tag, Namespace data) {
+      data.Set(dataName, (Datum)oldValue);
+      oldValue = null;
       return replacement;
     }
   }
