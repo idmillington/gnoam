@@ -34,3 +34,6 @@ Ankh.NoLoad
 # MonoDevelop
 *.pidb
 *.userprefs
+
+# NUnit
+TestResult.xml
