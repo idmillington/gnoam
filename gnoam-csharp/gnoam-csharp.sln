@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gnoam-csharp", "gnoam-csharp.csproj", "{5B0F6108-27A5-440A-BC31-9CF681731A55}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gnoam-lib", "gnoam-lib.csproj", "{5B0F6108-27A5-440A-BC31-9CF681731A55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,7 +15,6 @@ Global
 		{5B0F6108-27A5-440A-BC31-9CF681731A55}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = gnoam-csharp.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
 		$1.inheritsSet = null

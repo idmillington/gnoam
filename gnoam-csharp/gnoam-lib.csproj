@@ -40,8 +40,6 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Main.cs" />
-    <Compile Include="src\file\LineSplitter.cs" />
-    <Compile Include="src\file\SyntaxError.cs" />
     <Compile Include="src\engine\Engine.cs" />
     <Compile Include="src\engine\Namespace.cs" />
     <Compile Include="src\engine\Content.cs" />
@@ -49,16 +47,18 @@
     <Compile Include="src\engine\Tag.cs" />
     <Compile Include="src\engine\TagReplacementWatchers.cs" />
     <Compile Include="src\engine\Expression.cs" />
-    <Compile Include="src\file\TagSplitter.cs" />
     <Compile Include="src\test\TestOrdinalFilter.cs" />
     <Compile Include="src\test\TestCardinalFilter.cs" />
+    <Compile Include="src\parse\LineSplitter.cs" />
+    <Compile Include="src\parse\SyntaxError.cs" />
+    <Compile Include="src\parse\TagSplitter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="src\" />
-    <Folder Include="src\file\" />
     <Folder Include="src\engine\" />
     <Folder Include="src\test\" />
+    <Folder Include="src\parse\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
