@@ -35,11 +35,11 @@ namespace gnoam
       RuleSet rules = new RuleSet();
 
       rule = new Rule("root");
-      rule.Priority = 2; rule.MinPriority = 2;
+      rule.Priority = 2; rule.MinPriority = 1;
       rule.Output = new Content();
       rule.Output.Add("Hello. ");
       rule.Output.Add(new Tag("cats"));
-      rule.Expression = Expression.Parse("value? 3 >=");
+      rule.Expression = Expression.Parse("value? 2 >=");
       rules.Add(rule);
       Console.WriteLine(rule.ToString());
 

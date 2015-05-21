@@ -93,6 +93,8 @@ namespace gnoam.engine
       if (rulesForTag != null) {
         int lastMatchingPriority = int.MinValue;
         foreach (RuleBase rule in rulesForTag) {
+          // Rules should be stored in decreasing priority, so as soon as we find a priority lower than
+          // a valid match, we know to stop looking.
           if (rule.Priority < lastMatchingPriority) break;
 
           // If the tag has no hashtags, it doesn't care, if it does, at least one must be present.
